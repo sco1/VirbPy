@@ -1,11 +1,14 @@
+import json
 import subprocess
 import tkinter as tk
-from collections import deque
+from datetime import datetime as dt
 from pathlib import Path
 from tkinter import filedialog
 from typing import List, Union
 
 import click
+import pandas as pd
+from dateutil.parser import parse
 
 
 PATH_TO_CONVERTER = Path(r"C:\Program Files\Garmin\VIRB Edit\GMetrixConverter.exe")
@@ -29,25 +32,19 @@ FIELDS_TO_EXPORT = {  # -d flag
     "eRawBarometricPressure_4": "Raw Barometric Pressure",
     "eAltitudeUncertainty_4": "Altitude Uncertainty",
     "ePositionUncertainty_4": "Position Uncertainty",
-    "eRotation": "Rotation",
-    "eGPSHighSpeed": "GPS High Speed Tag",
-    "eHighAltitude": "High Altitude Tag",
-    "eTurn": "Turn Tag",
-    "eAltitudeDescent": "Descent Tag",
-    "eZeroGravity": "Zero Gravity Tag",
 }
 
 
 def processing_pipeline(datadir: Path) -> None:
     """
-    Recursively search for *.fit files contained in the provided directory & convert to CSV.
+    Recursively search for *.fit files contained in the provided directory & convert to *.xlsx.
 
-    Files are first converted to JSON using Garmin's GMetrix converter, then converted to a CSV
+    Files are first converted to JSON using Garmin's GMetrix converter, then converted to a *.xlsx
 
     Note: *.fit files with an exactly named *.json partner in the same directory are ignored.
     """
-    # Convert unconverted files to JSON & add to CSV conversion queue
-    csv_conversion_queue = deque()
+    # Convert unconverted files to JSON & add to XLSX conversion queue
+    excel_conversion_queue = []
     for fit_file in datadir.rglob("*.fit"):
         # Check for existing conversion
         file_as_json = fit_file.with_suffix(".json")
@@ -55,7 +52,11 @@ def processing_pipeline(datadir: Path) -> None:
             continue
         else:
             call_converter(fit_file)
-            csv_conversion_queue.append(file_as_json)
+            excel_conversion_queue.append(file_as_json)
+
+    # Convert queued JSON files to Excel
+    for new_json in excel_conversion_queue:
+        fit_json_to_excel(new_json)
 
 
 def build_cli_cmd(
@@ -81,9 +82,9 @@ def call_converter(in_filepath: Path) -> None:
     subprocess.run(build_cli_cmd(in_filepath))
 
 
-def fit_json_to_csv(in_filepath: Path) -> None:
+def fit_json_to_excel(in_filepath: Path) -> None:
     """
-    Convert Garmin Virb data JSON to a CSV.
+    Convert Garmin Virb data JSON to an *.xlsx.
 
     Data is output by Garmin's GMetrixConverter as a JSON of the following sample form:
         {
@@ -108,7 +109,27 @@ def fit_json_to_csv(in_filepath: Path) -> None:
             ]
         }
     """
-    raise NotImplementedError
+    with in_filepath.open("r") as f:
+        raw_data = json.load(f)
+
+    start_time = parse(raw_data["metadata"]["startTime"])
+
+    all_dfs = pd.DataFrame()
+    for data_type in raw_data["typedata"]:
+        test = pd.DataFrame(data_type["values"])
+        test["time"] = test["time"].apply(_time_since_start, args=[start_time])
+        test.set_index("time", inplace=True)
+        test.columns = [data_type["type"]]
+        all_dfs = pd.concat([all_dfs, test], axis=1, sort=False)
+
+    out_filepath = in_filepath.with_suffix(".xlsx")
+    all_dfs.to_excel(out_filepath)
+
+
+def _time_since_start(timestamp: str, start_time: dt) -> float:
+    timestamp = parse(timestamp)
+    delta = timestamp - start_time
+    return delta.total_seconds()
 
 
 @click.command()

@@ -134,7 +134,7 @@ def _time_since_start(timestamp: str, start_time: dt) -> float:
 
 @click.command()
 @click.option("-d", "--datadir", default=None, help="Top level data directory")
-def cli(datadir: Union[str, None]):
+def cli(datadir: Union[str, None]) -> None:
     """
     CLI Userflow.
 

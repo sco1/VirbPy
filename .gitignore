@@ -21,6 +21,7 @@ venv/
 ENV/
 env.bak/
 venv.bak/
+.python-version
 
 # jetbrains
 .idea/
@@ -31,13 +32,18 @@ venv.bak/
 
 # logs
 *.log
+test-*.xml
 
 # Unit test / coverage reports
 .coverage
 .tox
 .coverage.*
 coverage.xml
+cov.xml
 htmlcov
+.pytest_cache/
 
-# Sample Data
-Sample Data/
+# mypy
+.mypy_cache/
+
+sample_data/

@@ -21,3 +21,5 @@ ignore=
 exclude=
     __pycache__,.cache,
     venv,.venv,
+per-file-ignores =
+    tests/*:D103

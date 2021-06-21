@@ -1,11 +1,12 @@
 name: lint-and-test
 
 on:
+  pull_request:
   push:
     branches:
-      - '**'
-    tags-ignore:  # Don't double-run for tags
-      - '**'
+      - main
+    tags-ignore:
+      - "**"  # Skip re-linting when tags are added
 
 jobs:
   lint-and-test:  # Additional linting done by pre-commit.ci

@@ -16,7 +16,8 @@ python-dateutil = "^2.8"
 typer = "^0.3"
 
 [tool.poetry.dev-dependencies]
-black = "^21.5b1"
+black = "^21.6b0"
+bump2version = "^1.0"
 flake8 = "^3.8"
 flake8-annotations = "^2.6"
 flake8-bugbear = "^21.4"
@@ -24,12 +25,24 @@ flake8-docstrings = "^1.5"
 flake8-fixme = "^1.1"
 flake8-import-order = "^0.18"
 flake8-tidy-imports = "^4.1"
-mypy = "^0.812"
+mypy = "^0.902"
 pep8-naming = "^0.11"
 pre-commit = "^2.7"
 
 [tool.black]
 line-length = 100
+
+[tool.mypy]
+disallow_incomplete_defs = true
+disallow_untyped_calls = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
+no_implicit_optional = true
+show_error_codes = true
+warn_redundant_casts = true
+warn_return_any = true
+warn_unused_configs = true
+warn_unused_ignores = true
 
 [build-system]
 requires = ["poetry>=1.0"]

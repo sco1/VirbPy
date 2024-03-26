@@ -1,5 +1,7 @@
 import json
+import os
 import subprocess
+import sys
 import tkinter as tk
 import typing as t
 from datetime import datetime as dt
@@ -9,9 +11,26 @@ from tkinter import filedialog
 import pandas as pd
 import typer
 from dateutil.parser import parse
+from dotenv import load_dotenv
+
+load_dotenv()
+
+converter_path = os.getenv("PATH_TO_CONVERTER")
+if not converter_path:
+    if sys.platform == "win32":
+        PATH_TO_CONVERTER = Path(r"C:\Program Files\Garmin\VIRB Edit\GMetrixConverter.exe")
+    elif sys.platform == "darwin":
+        PATH_TO_CONVERTER = Path(
+            r"/Applications/Garmin VIRB Edit.app/Contents/Resources/GMetrixConverter"
+        )
+    else:
+        raise RuntimeError(
+            "No default Virb software location available. Set in the PATH_TO_CONVERTER env var."
+        ) from None
+else:
+    PATH_TO_CONVERTER = Path(converter_path)
 
 
-PATH_TO_CONVERTER = Path(r"C:\Program Files\Garmin\VIRB Edit\GMetrixConverter.exe")
 SORT_ORDER = "eByType"  # -s flag
 FIELDS_TO_EXPORT = {  # -d flag
     "eGenericBegin_4": "Position",
@@ -154,7 +173,6 @@ def _prompt_for_dir(start_dir: Path = Path()) -> Path:  # pragma: no cover
 def batch(
     data_dir: Path = typer.Option(None, exists=True, file_okay=False, dir_okay=True),
 ) -> None:
-    """ """
     if data_dir is None:
         data_dir = _prompt_for_dir()
 
@@ -162,8 +180,7 @@ def batch(
 
 
 @virbpy_cli.callback(invoke_without_command=True, no_args_is_help=True)
-def main(ctx: typer.Context) -> None:  # pragma: no cover
-    """ """
+def main(ctx: typer.Context) -> None:  # noqa: D103  # pragma: no cover
     # Provide a callback for the base invocation to display the help text & exit.
     pass
 

@@ -53,7 +53,7 @@ FIELDS_TO_EXPORT = {  # -d flag
     "ePositionUncertainty_4": "Position Uncertainty",
 }
 
-virbpy_cli = typer.Typer()
+virbpy_cli = typer.Typer(add_completion=False)
 
 
 def processing_pipeline(data_dir: Path) -> None:

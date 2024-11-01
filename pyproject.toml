@@ -1,40 +1,63 @@
-[tool.poetry]
+[project]
 name = "virbpy"
 version = "0.1.0"
-description = ""
-authors = ["S. Co1 <sco1.git@gmail.com>"]
-packages = [{include="virbpy"}]
-
-include = [
-    {path = "./CHANGELOG.md", format = "sdist"}
+description = "Data Conversion Wrapper for Garmin VIRB 360"
+authors = [
+    {name = "sco1", email = "sco1.git@gmail.com"}
+]
+maintainers = [
+    {name = "sco1", email = "sco1.git@gmail.com"}
 ]
 
-[tool.poetry.scripts]
+readme = "README.md"
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Typing :: Typed",
+]
+
+requires-python = ">=3.11"
+dependencies = [
+    "openpyxl~=3.1",
+    "pandas~=2.2",
+    "python-dateutil~=2.9",
+    "python-dotenv~=1.0",
+    "typer-slim~=0.12",
+]
+
+[project.urls]
+Homepage = "https://github.com/sco1/"
+Documentation = "https://github.com/sco1/virbpy/blob/main/README.md"
+Repository = "https://github.com/sco1/virbpy"
+Issues = "https://github.com/sco1/virbpy/issues"
+Changelog = "https://github.com/sco1/virbpy/blob/main/CHANGELOG.md"
+
+[project.scripts]
 virbpy = "virbpy.main:virbpy_cli"
 
-[tool.poetry.dependencies]
-python = "^3.10"
-openpyxl = "^3.0"
-pandas = "^2.2"
-python-dateutil = "^2.8"
-python-dotenv = "^1.0"
-typer = "^0.10"
-
-[tool.poetry.dev-dependencies]
-black = "^24.3"
-bump2version = "^1.0"
-flake8 = "^7.0"
-flake8-annotations = "^3.0"
-isort = "^5.12"
-mypy = "^1.0"
-pre-commit = "^3.0"
-pytest = "^8.0"
-pytest-check = "^2.1"
-pytest-cov = "^4.0"
-pytest-randomly = "^3.12"
-ruff = "^0.3"
-tox = "^4.4"
-types-python-dateutil = "^2.9"
+[tool.uv]
+dev-dependencies = [
+    "black~=24.10",
+    "flake8~=7.1",
+    "flake8-annotations~=3.1",
+    "isort~=5.13",
+    "mypy~=1.11",
+    "pre-commit~=4.0",
+    "pytest~=8.3",
+    "pytest-cov~=5.0",
+    "pytest-randomly~=3.15",
+    "ruff~=0.6",
+    "sco1-bumper~=1.0",
+    "tox~=4.18",
+    "tox-uv~=1.11",
+    "types-python-dateutil~=2.9",
+]
 
 [tool.black]
 line-length = 100
@@ -61,5 +84,5 @@ warn_unused_configs = true
 warn_unused_ignores = true
 
 [build-system]
-requires = ["poetry-core>=1.2"]
-build-backend = "poetry.core.masonry.api"
+requires = ["hatchling"]
+build-backend = "hatchling.build"

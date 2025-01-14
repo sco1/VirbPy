@@ -1,17 +1,36 @@
 import json
+import os
 import subprocess
+import sys
 import tkinter as tk
+import typing as t
 from datetime import datetime as dt
 from pathlib import Path
 from tkinter import filedialog
-from typing import List, Union
 
-import click
 import pandas as pd
+import typer
 from dateutil.parser import parse
+from dotenv import load_dotenv
+
+load_dotenv()
+
+converter_path = os.getenv("PATH_TO_CONVERTER")
+if not converter_path:
+    if sys.platform == "win32":
+        PATH_TO_CONVERTER = Path(r"C:\Program Files\Garmin\VIRB Edit\GMetrixConverter.exe")
+    elif sys.platform == "darwin":
+        PATH_TO_CONVERTER = Path(
+            r"/Applications/Garmin VIRB Edit.app/Contents/Resources/GMetrixConverter"
+        )
+    else:
+        raise RuntimeError(
+            "No default Virb software location available. Set in the PATH_TO_CONVERTER env var."
+        ) from None
+else:
+    PATH_TO_CONVERTER = Path(converter_path)
 
 
-PATH_TO_CONVERTER = Path(r"C:\Program Files\Garmin\VIRB Edit\GMetrixConverter.exe")
 SORT_ORDER = "eByType"  # -s flag
 FIELDS_TO_EXPORT = {  # -d flag
     "eGenericBegin_4": "Position",
@@ -34,8 +53,10 @@ FIELDS_TO_EXPORT = {  # -d flag
     "ePositionUncertainty_4": "Position Uncertainty",
 }
 
+virbpy_cli = typer.Typer(add_completion=False)
 
-def processing_pipeline(datadir: Path) -> None:
+
+def processing_pipeline(data_dir: Path) -> None:
     """
     Recursively search for *.fit files contained in the provided directory & convert to *.xlsx.
 
@@ -43,9 +64,12 @@ def processing_pipeline(datadir: Path) -> None:
 
     Note: *.fit files with an exactly named *.json partner in the same directory are ignored.
     """
+    if data_dir is None:
+        raise ValueError("No processing directory specified")
+
     # Convert unconverted files to JSON & add to XLSX conversion queue
     excel_conversion_queue = []
-    for fit_file in datadir.rglob("*.fit"):
+    for fit_file in data_dir.rglob("*.fit"):
         # Check for existing conversion
         file_as_json = fit_file.with_suffix(".json")
         if file_as_json.exists():
@@ -61,9 +85,9 @@ def processing_pipeline(datadir: Path) -> None:
 
 def build_cli_cmd(
     in_filepath: Path,
-    out_filepath: Union[Path, None] = None,
+    out_filepath: t.Union[Path, None] = None,
     sort_order: str = SORT_ORDER,
-    fields_to_export: List = FIELDS_TO_EXPORT.keys(),
+    fields_to_export: t.Iterable[str] = FIELDS_TO_EXPORT.keys(),
     converter_path: Path = PATH_TO_CONVERTER,
 ) -> str:
     """Build the CLI command string from the provided parameters to pass to GMetrixConverter."""
@@ -127,31 +151,39 @@ def fit_json_to_excel(in_filepath: Path) -> None:
 
 
 def _time_since_start(timestamp: str, start_time: dt) -> float:
-    timestamp = parse(timestamp)
-    delta = timestamp - start_time
+    timestamp_dt = parse(timestamp)
+    delta = timestamp_dt - start_time
     return delta.total_seconds()
 
 
-@click.command()
-@click.option("-d", "--datadir", default=None, help="Top level data directory")
-def cli(datadir: Union[str, None]):
-    """
-    CLI Userflow.
+def _prompt_for_dir(start_dir: Path = Path()) -> Path:  # pragma: no cover
+    """Open a Tk file selection dialog to prompt the user to select a directory for processing."""
+    root = tk.Tk()
+    root.withdraw()
 
-    If no `datadir` is explicitly specified, the user is prompted to select the
-    top-level data directory.
-    """
-    if not datadir:
-        # Generate a Tk file selection dialog to select the top level data dir
-        # if none is provided on the CLI
-        root = tk.Tk()
-        root.withdraw()
-        datadir = Path(filedialog.askdirectory(title="Select Data Directory"))
-    else:
-        datadir = Path(datadir)
+    return Path(
+        filedialog.askdirectory(
+            title="Select directory for batch processing",
+            initialdir=start_dir,
+        )
+    )
 
-    processing_pipeline(datadir)
+
+@virbpy_cli.command()
+def batch(
+    data_dir: Path = typer.Option(None, exists=True, file_okay=False, dir_okay=True),
+) -> None:
+    if data_dir is None:
+        data_dir = _prompt_for_dir()
+
+    processing_pipeline(data_dir)
+
+
+@virbpy_cli.callback(invoke_without_command=True, no_args_is_help=True)
+def main(ctx: typer.Context) -> None:  # noqa: D103  # pragma: no cover
+    # Provide a callback for the base invocation to display the help text & exit.
+    pass
 
 
 if __name__ == "__main__":
-    cli()
+    virbpy_cli()
